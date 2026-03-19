@@ -5,12 +5,12 @@ Built a secure and scalable banking transaction backend using REST architecture,
 
 Key Features:
 
-* 🔐 JWT Authentication & Authorization** – Implemented secure user login and role-based access control.
-* 💳 Transaction Idempotency** – Ensured safe transaction retries without duplicate processing.
-* 📒 Ledger Accounting System** – Designed a double-entry style ledger to maintain accurate financial records.
-* 🗄️ MongoDB Aggregation Pipelines** – Used advanced aggregation for transaction summaries and reporting.
-* ⚡ RESTful APIs** – Developed clean and modular API endpoints following REST best practices.
-* 🛡️ Data Consistency Controls** – Applied validation and atomic operations to maintain transaction integrity.
+* 🔐 JWT Authentication & Authorization – Implemented secure user login and role-based access control.
+* 💳 Transaction Idempotency– Ensured safe transaction retries without duplicate processing.
+* 📒 Ledger Accounting System – Designed a double-entry style ledger to maintain accurate financial records.
+* 🗄️ MongoDB Aggregation Pipelines – Used advanced aggregation for transaction summaries and reporting.
+* ⚡ RESTful APIs – Developed clean and modular API endpoints following REST best practices.
+* 🛡️ Data Consistency Controls – Applied validation and atomic operations to maintain transaction integrity.
 
 Tech Stack:
 `Node.js` | `Express.js` | `MongoDB` | `JWT` | `Mongoose` | `REST API`
