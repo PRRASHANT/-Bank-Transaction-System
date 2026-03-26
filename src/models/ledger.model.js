@@ -16,7 +16,7 @@ const ledgerSchema = new mongoose.Schema({
         immutable : true
     },
     transaction: {
-        type : moongoose.Schema.Types.ObjectId,
+        type : mongoose.Schema.Types.ObjectId,
         ref: "transaction",
         required : [true, "Ledger must be associated with a transaction "],
         index: true,
@@ -37,7 +37,7 @@ const ledgerSchema = new mongoose.Schema({
 
 
 function preventLedgerModification(){
-    throw new error("Ledger entries are immutable and cannot be modified or deleted ");
+    throw new Error("Ledger entries are immutable and cannot be modified or deleted ");
 
 }
 
@@ -48,7 +48,7 @@ ledgerSchema.pre('updateOne', preventLedgerModification)
 ledgerSchema.pre('deleteOne', preventLedgerModification)
 ledgerSchema.pre('remove', preventLedgerModification)
 ledgerSchema.pre('deleteMany', preventLedgerModification)
-ledgerSchema.pre('UpdateMany', preventLedgerModification)
+ledgerSchema.pre('updateMany', preventLedgerModification)
 ledgerSchema.pre('findOneAndRemove', preventLedgerModification)
 ledgerSchema.pre('findOneAndReplace', preventLedgerModification)
 
