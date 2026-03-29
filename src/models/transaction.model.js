@@ -14,11 +14,11 @@ const transactionSchema = new mongoose.Schema({
         required:  [true, "Transaction must be associated with a To account "],
         index: true
     },
-    Status:{
+    status:{
         type: String,
         enum: {
             values : ["PENDING","COMPLETED","FAILED", "REVERSED"],
-            message: "ststus can be either PENDING,COMPLETED,FAILED OR REVERSED",
+            message: "status can be either PENDING,COMPLETED,FAILED OR REVERSED",
         },
         default: "PENDING"
     },
@@ -27,6 +27,7 @@ const transactionSchema = new mongoose.Schema({
         required: [true, "Amount is required for creating a transaction " ],
         min:[ 0, "Transaction amount cannot be neggative "]
     },
+
     //it stops the payment if it is being done twice or stops doing multiple payments id one transaction fails 
 
     idempotencyKey: {
@@ -34,7 +35,9 @@ const transactionSchema = new mongoose.Schema({
         required: [ true, "Idempotency key is required for creating a transaction" ],
         index: true,
         unique: true
-    },
+    }
+},
+{
     timestamps: true
 })
 

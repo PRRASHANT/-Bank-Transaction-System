@@ -7,6 +7,13 @@ const app = express(); // server instance
 app.use(express.json()); // Middleware
 app.use(cookieParser());
 
+
+//suggested by gpt
+app.use((req,res,next)=>{
+    console.log("URL:", req.method, req.originalUrl);
+    next();
+});
+
 //ROUTES REQUIRED
 const authRouter = require("./routes/auth.routes");
 const accountRouter = require("./routes/account.routes");

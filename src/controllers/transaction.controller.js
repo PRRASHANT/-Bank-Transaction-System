@@ -4,7 +4,7 @@ const accountModel = require("../models/account.model")
 const emailService = require("../services/email.service")
 const mongoose = require ("mongoose")
 
-//2.32.26- Creating Transaction
+//03.04.05  creating transaction api 
 /**
  * Create a new transaction 
  * 10 steps  Transfer Flow:
@@ -22,6 +22,8 @@ const mongoose = require ("mongoose")
 
 async function createTransaction(req, res){
 
+try{
+
 // 1. Validate request part
 
     const {fromAccount, toAccount, amount ,idempotencyKey } = req.body
@@ -32,19 +34,13 @@ async function createTransaction(req, res){
         })
     }
 
-    const fromUserAccount = await accountModel.findOne({
-        _id : fromAccount,
+    const fromUserAccount = await accountModel.findById(fromAccount)
 
-    })
-
-    const toUserAccount = await accountModel.findOne({
-        _id: toAccount,
-
-    })
+    const toUserAccount = await accountModel.findById(toAccount)
 
     if(!fromUserAccount || !toUserAccount) {
         return res.status(400).json({
-            messgae: "Invalid fromAccount or toAccount"
+            message: "Invalid fromAccount or toAccount"
         })
     }
 
@@ -64,9 +60,8 @@ async function createTransaction(req, res){
         }
 
         if(isTransactionAlreadyExists.status == "PENDING") {
-            return res.status(200).jspn({
+            return res.status(200).json({
                 message: "Transaction is Processing",
-
             })
         }
 
@@ -78,7 +73,7 @@ async function createTransaction(req, res){
 
         if(isTransactionAlreadyExists.status == "REVERSED"){
             return res.status(500).json({
-                messgae: "Transaction was reversed, please retry "
+                message: "Transaction was reversed, please retry "
             })
         }
     }
@@ -86,7 +81,7 @@ async function createTransaction(req, res){
 // 3 .Check account status
 
     if(fromUserAccount.status !=="ACTIVE" || toUserAccount.status !=="ACTIVE"){
-        return res(400).json({
+        return res.status(400).json({
             message :"Both fromAccount and toAccount must be ACTIVE to process transaction"
         })
     }
@@ -97,7 +92,7 @@ async function createTransaction(req, res){
 
     if(balance <amount) {
         return res.status(400).json({
-            message : `Insufficient balance. Current balance is ${balance}.Requested amount is ${amount}`
+            message : `Insufficient balance. Current balance is ${balance}. Requested amount is ${amount}`
         })
     }
 
@@ -106,29 +101,29 @@ async function createTransaction(req, res){
     const session = await mongoose.startSession()
     session.startTransaction()
 
-    const transaction = await transactionModel.create({
+    const [transaction] = await transactionModel.create([{
         fromAccount,
         toAccount,
         amount,
         idempotencyKey,
         status: "PENDING"
-    },{ session })
+    }],{ session })
 
-    const debitLedgerEntry = await ledgerModel.create({
+    await ledgerModel.create([{
         account: fromAccount,
         amount : amount,
         transaction: transaction._id,
         type:"DEBIT"
-    },{ session })
+    }],{ session })
 
-    const creditLedgerEntry = await ledgerModel.create({
+    await ledgerModel.create([{
         account: toAccount,
         amount : amount,
         transaction: transaction._id,
         type:"CREDIT"
-    },{ session })
+    }],{ session })
 
-    transaction.status =" COMPLETED "
+    transaction.status ="COMPLETED"
     await transaction.save({ session })
 
     await session.commitTransaction()
@@ -137,12 +132,107 @@ async function createTransaction(req, res){
 // 10.Send email notification 
 
     await emailService.sendTransactionEmail(req.user.email,req.user.name,amount, toAccount )
-        return res.status(201).json({
-            message: "Transaction Completed Successfully",
-            transaction : transaction
+
+    return res.status(201).json({
+        message: "Transaction Completed Successfully",
+        transaction : transaction
+    })
+
+}catch(error){
+
+    return res.status(500).json({
+        message:"Transaction failed",
+        error:error.message
+    })
+
+}
+
+}
+
+
+async function createInitialFundsTransaction(req,res){
+
+try{
+
+    const{ toAccount, amount ,idempotencyKey } = req.body
+
+    if(!toAccount  || !amount  || !idempotencyKey){
+        return res.status(400).json({
+            message: "toAccount, amount and idempotencyKey are required"
         })
+    }
+
+    const toUserAccount = await accountModel.findById(toAccount)
+
+    if(!toUserAccount){
+        return res.status(400).json({
+            message: "Invalid Account"
+        })
+    }
+
+
+    // const fromUserAccount = await accountModel.findOne({
+    //     user: req.user._id
+    // })
+
+    const fromUserAccount = await accountModel.findOne()
+
+    if(!fromUserAccount) {
+       return res.status(400).json({
+        message: "System user account not found "
+       }) 
+    }
+
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
+    const [transaction] = await transactionModel.create([{
+        fromAccount: fromUserAccount._id,
+        toAccount,
+        amount,
+        idempotencyKey,
+        status: "PENDING"
+    }],{ session })
+
+    await ledgerModel.create([{
+        account: fromUserAccount._id,
+        amount: amount,
+        transaction: transaction._id,
+        type: "DEBIT"
+    }],{ session })
+
+    await ledgerModel.create([{
+        account: toUserAccount._id,
+        amount: amount,
+        transaction: transaction._id,
+        type: "CREDIT"
+    }],{ session })
+
+    transaction.status ="COMPLETED"
+    await transaction.save({ session })
+
+    await session.commitTransaction()
+    session.endSession()
+
+    return res.status(201).json({
+        message: "initial funds transaction completed successfully !",
+        transaction: transaction 
+    })
+
+}catch(error){
+
+    return res.status(500).json({
+        message:"Initial funds transaction failed",
+        error:error.message
+    })
+
+}
 
 }
 
 
 
+module.exports ={
+    createTransaction,
+    createInitialFundsTransaction
+}
