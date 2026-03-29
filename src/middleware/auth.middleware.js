@@ -56,7 +56,7 @@ async function authSystemUserMiddleware(req, res ,next ){
             message: "Unauthorized access, token is invalid"
         })
     }
-    
+
     try{
         const decoded =jwt.verify(token, process.env.JWT_SECRET)
 
